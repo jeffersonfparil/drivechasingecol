@@ -2,6 +2,10 @@
 
 Code, and data repository.
 
+## Authors:
+- Jeff Paril ([ORCID: 0000-0002-5693-4123](https://orcid.org/0000-0002-5693-4123))
+- Ben Phillips ([ORCID: 0000-0003-2580-2336](https://orcid.org/0000-0003-2580-2336))
+
 ## Notes:
 
 - Output figures of the analysis are in `out/no_TADS-NstaR5/`.

@@ -3265,74 +3265,92 @@ Figure_2 = function(dat, include.TADS, OUT_DIR){
 }
 
 #########################################################
-### FIGURE 3: Venn diagram of outcomes of the simulations
+### FIGURE 3: Stacked barplot of outcomes of the simulations
 Figure_3 = function(dat, OUT_DIR){
+  # vec_id_success = c(1:nrow(dat))[dat$crash]
+  # vec_id_failure = c(1:nrow(dat))[!dat$crash]
+  # vec_id_drive_loss = c(1:nrow(dat))[dat$drive_loss]
+  # # vec_id_chasing = c(1:nrow(dat))[(!dat$drive_faster_than_WT) | (dat$penetration)] ### defining chasing as when the drive slower than the WT and/or when the WT can penetrate the wave of invadind drive-carriers
+  # vec_id_chasing = c(1:nrow(dat))[(dat$chasing)]
+  # list_events = list(vec_id_success,
+  #                   vec_id_failure,
+  #                   vec_id_drive_loss,
+  #                   vec_id_chasing)
+  # vec_names = c(paste0("Drive Success\n(", round(100*mean(dat$crash),2), "%)"),
+  #               paste0("Drive Failure\n(", round(100*mean(!dat$crash),2), "%)"),
+  #               "Drive Loss",
+  #               "Chasing")
+  #              #  "Chasing\n(v_drive ≤ v_WT; and Penetration)")
+  # venn.diagram(x=list_events,
+  #             category.names=vec_names,
+  #             print.mode=c("percent", "raw"),
+  #             sigdigs=3,
+  #             lwd = 0,
+  #             fill = c("#33a02c", "#d7191c", "#fdae61", "#abd9e9"),
+  #             imagetype = "svg",
+  #             height = 8,
+  #             width = 8,
+  #             filename=paste0(OUT_DIR, "/Figure_3-venn-diagram-outcomes.svg"))
+  ### Stacked barplot
+  svg(paste0(OUT_DIR, "/Figure_3-stacked-barplot-outcomes.svg"), width=10, height=6)
   vec_id_success = c(1:nrow(dat))[dat$crash]
   vec_id_failure = c(1:nrow(dat))[!dat$crash]
-  vec_id_drive_loss = c(1:nrow(dat))[dat$drive_loss]
-  # vec_id_chasing = c(1:nrow(dat))[(!dat$drive_faster_than_WT) | (dat$penetration)] ### defining chasing as when the drive slower than the WT and/or when the WT can penetrate the wave of invadind drive-carriers
-  vec_id_chasing = c(1:nrow(dat))[(dat$chasing)]
-  list_events = list(vec_id_success,
-                    vec_id_failure,
-                    vec_id_drive_loss,
-                    vec_id_chasing)
-  vec_names = c(paste0("Drive Success\n(", round(100*mean(dat$crash),2), "%)"),
-                paste0("Drive Failure\n(", round(100*mean(!dat$crash),2), "%)"),
-                "Drive Loss",
-                "Chasing")
-               #  "Chasing\n(v_drive ≤ v_WT; and Penetration)")
-  venn.diagram(x=list_events,
-              category.names=vec_names,
-              print.mode=c("percent", "raw"),
-              sigdigs=3,
-              lwd = 0,
-              fill = c("#33a02c", "#d7191c", "#fdae61", "#abd9e9"),
-              imagetype = "svg",
-              height = 8,
-              width = 8,
-              filename=paste0(OUT_DIR, "/Figure_3-venn-diagram-outcomes.svg"))
-  ###@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-  ### TESTING TABLE ALTERNATIVE
-  vec_idx_success_AND_slowdrive   = (dat$crash)  & !(dat$drive_faster_than_WT)
-  vec_idx_success_AND_penetration = (dat$crash)  & (dat$penetration)
-  vec_idx_success_AND_driveloss   = (dat$crash)  & (dat$drive_loss)
-  vec_idx_failure_AND_slowdrive   = !(dat$crash) & !(dat$drive_faster_than_WT)
-  vec_idx_failure_AND_penetration = !(dat$crash) & (dat$penetration)
-  vec_idx_failure_AND_driveloss   = !(dat$crash) & (dat$drive_loss)
+  vec_id_driveLoss = c(1:nrow(dat))[dat$drive_loss]
+  vec_id_chasing = c(1:nrow(dat))[dat$chasing]
+  vec_id_chasing_and_driveLoss = c(1:nrow(dat))[(dat$chasing) & (dat$drive_loss)]
 
-  data.frame(slowdrive=c())
-  ###@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+   success_chasing_and_driveLoss = sum(vec_id_chasing_and_driveLoss %in% vec_id_success)
+   success_chasing = sum(vec_id_chasing %in% vec_id_success) - success_chasing_and_driveLoss
+   success_driveLoss = sum(vec_id_driveLoss %in% vec_id_success) - success_chasing_and_driveLoss
+   success_the_rest = length(vec_id_success) - (success_chasing + success_driveLoss + success_chasing_and_driveLoss)
 
-  ### TESTING BAR PLOT AS AN ALTERNATIVE
-  # idx_success = dat$crash
-  # idx_failure = !dat$crash
-  # idx_slow_drive_or_penetration = (!dat$drive_faster_than_WT) | dat$penetration
-  # idx_success_and_chase = idx_success & idx_slow_drive_or_penetration
-  # idx_success_and_loss = idx_success & dat$drive_loss
-  # idx_failure_and_chase = idx_failure & idx_slow_drive_or_penetration
-  # idx_failure_and_loss = idx_failure & dat$drive_loss
+   failure_chasing_and_driveLoss = sum(vec_id_chasing_and_driveLoss %in% vec_id_failure)
+   failure_chasing = sum(vec_id_chasing %in% vec_id_failure) - failure_chasing_and_driveLoss
+   failure_driveLoss = sum(vec_id_driveLoss %in% vec_id_failure) - failure_chasing_and_driveLoss
+   failure_the_rest = length(vec_id_failure) - (failure_chasing + failure_driveLoss + failure_chasing_and_driveLoss)
 
-  # X = matrix(c(sum(idx_success_and_chase),
-  #              sum(idx_success_and_loss),
-  #              sum(idx_success)-sum(idx_success_and_chase | idx_success_and_loss),
-  #              sum(idx_failure_and_chase),
-  #              sum(idx_failure_and_loss),
-  #              sum(idx_failure)-sum(idx_failure_and_chase | idx_failure_and_loss)),
-  #             ncol=2, byrow=FALSE)
-  # X = X / nrow(dat)
+   X = data.frame(Success=c(success_chasing, success_driveLoss, success_chasing_and_driveLoss, success_the_rest),
+                  Failure=c(failure_chasing, failure_driveLoss, failure_chasing_and_driveLoss, failure_the_rest))
+   rownames(X) = c("Chasing", "Drive loss", "Chasing and drive loss", "Others")
+   colours = c("#fb8072", "#80b1d3", "#b2df8a", "#cccccc")
+   X = as.matrix(X)
+   n = sum(X)
+   X = X / n
+   bp = barplot(X, col=colours, bord=NA, xaxt="n", ylab="Frequency")
 
-  # colnames(X) = c("Success", "Failure")
-  # rownames(X) = c("Chase", "Drive loss", "Other events")
+   success_pct = round(sum(X[,1]*100), 2)
+   failure_pct = round(sum(X[,2]*100), 2)
+   axis(side=1, at=bp, col=NA, cex.axis=1.5, lab=c(paste0("Success (", success_pct, "%)"), paste0("Failure (", failure_pct, "%)")))
 
-  # vec_col = c("#66c2a5", "#fc8d62", "#8da0cb")
-  # bp = barplot(X, col=vec_col, border=NA)
-  # axis(1, at=bp, lab=c("",""))
-  # grid()
-  # parse_lab = function(x){if(x<=1e-8){x=""}else{x=round(x,2)}; return(x)}
-  # text(x=bp, y=X[1,]/2, lab=unlist(lapply(X[1,], FUN=parse_lab)))
-  # text(x=bp, y=X[1,] + (X[2,]/2), lab=unlist(lapply(X[2,], FUN=parse_lab)))
-  # text(x=bp, y=X[1,] + X[2,] + (X[3,]/2), lab=unlist(lapply(X[3,], FUN=parse_lab)))
-  # legend("topleft", legend=rev(rownames(X)), fill=rev(vec_col))
+   success_chasing_pct = round(X[rownames(X)=="Chasing", colnames(X)=="Success"]*100,2)
+   success_chasing_cnt = X[rownames(X)=="Chasing", colnames(X)=="Success"] * n
+   success_chasing_pos = X[rownames(X)=="Chasing", colnames(X)=="Success"] / 2
+   text(x=bp[1], y=success_chasing_pos, lab=paste0("Chasing\n", success_chasing_pct, "% (", success_chasing_cnt, ")"))
+
+   failure_chasing_pct = round(X[rownames(X)=="Chasing", colnames(X)=="Failure"]*100,2)
+   failure_chasing_cnt = X[rownames(X)=="Chasing", colnames(X)=="Failure"] * n
+   failure_chasing_pos = X[rownames(X)=="Chasing", colnames(X)=="Failure"] / 2
+   text(x=bp[2], y=failure_chasing_pos, lab=paste0("Chasing\n", failure_chasing_pct, "% (", failure_chasing_cnt, ")"))
+
+   failure_driveLoss_pct = round(X[rownames(X)=="Drive loss", colnames(X)=="Failure"]*100,2)
+   failure_driveLoss_cnt = X[rownames(X)=="Drive loss", colnames(X)=="Failure"] * n
+   failure_driveLoss_pos = (X[rownames(X)=="Drive loss", colnames(X)=="Failure"] / 2) + (failure_chasing_pos*2)
+   text(x=bp[2], y=failure_driveLoss_pos, lab=paste0("Drive loss\n", failure_driveLoss_pct, "% (", failure_driveLoss_cnt, ")"))
+
+   failure_chasing_and_driveLoss_pct = round(X[rownames(X)=="Chasing and drive loss", colnames(X)=="Failure"]*100,2)
+   failure_chasing_and_driveLoss_cnt = X[rownames(X)=="Chasing and drive loss", colnames(X)=="Failure"] * n
+   failure_chasing_and_driveLoss_pos = (X[rownames(X)=="Chasing and drive loss", colnames(X)=="Failure"] / 2) + (failure_driveLoss_pos - failure_chasing_pos)*2
+   text(x=bp[2], y=failure_chasing_and_driveLoss_pos, lab=paste0("Chasing and drive loss\n", failure_chasing_and_driveLoss_pct, "% (", failure_chasing_and_driveLoss_cnt, ")"))
+   dev.off()
+   ### Checking the identities of the 47 simulations which resulted in failure but without chasing nor drive loss
+   # idx = !dat$crash & !dat$drive_loss & !dat$chasing
+   # failure_with_chasing_and_driveLoss = dat[idx, ]
+   # par(mfrow=c(2,2))
+   # hist(dat$Rmax)
+   # hist(failure_with_chasing_and_driveLoss$Rmax)
+   # hist(dat$sigma)
+   # hist(failure_with_chasing_and_driveLoss$sigma)
+   ### Conclusion: this are simulations where we fail to detect chasing because the way we detect penetration is imperfect!
 }
 
 ################################################################# (NOTE: below excludes TADS)

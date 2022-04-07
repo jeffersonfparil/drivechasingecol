@@ -6,6 +6,12 @@ Code, and data repository.
 - Jeff Paril ([ORCID: 0000-0002-5693-4123](https://orcid.org/0000-0002-5693-4123))
 - Ben Phillips ([ORCID: 0000-0003-2580-2336](https://orcid.org/0000-0003-2580-2336))
 
+## Quickstart
+- Edit `src/slurmer.sh` to match the configuration of your computing cluster.
+- Run the `src/driveChaseEcolRun.R` via `src/slurmer.sh`.
+- Once all simulation runs have finished, edit `src/driveChaseEcolAnalysis.R` to match your the set-up of your machine.
+- Run `driveChaseEcolAnalysis.R` and assess results.
+
 ## Notes:
 
 - Output figures of the analysis are in `out/no_TADS-NstaR5/`.

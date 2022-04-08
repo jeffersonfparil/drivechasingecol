@@ -3361,11 +3361,12 @@ Figure_4 = function(IN_DIR){
   ### load simulated time-series data at near panmicitc (sigma=10) condition
   DF_ALL = readRDS("Figure_4-recursive_functions_dataset.rds")
   ### plot
-  svg(paste0(OUT_DIR, "/Figure_4-timeseries-simulated-deterministic.svg"), width=10, height=8)
+  svg(paste0(OUT_DIR, "/Figure_4-timeseries-simulated-deterministic.svg"), width=15, height=10)
   layout(matrix(1:6, byrow=FALSE, nrow=2))
+  par(cex=1.25)
   for (R_max in c(2,3,5)){
     if (R_max==2){
-      simple_plot_timeseries_ribbon(R_max=R_max, DF_ALL=DF_ALL, show.legend=TRUE)
+      simple_plot_timeseries_ribbon(R_max=R_max, DF_ALL=DF_ALL, show.legend=FALSE)
     } else {
       simple_plot_timeseries_ribbon(R_max=R_max, DF_ALL=DF_ALL, show.legend=FALSE)
     }

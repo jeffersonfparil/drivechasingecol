@@ -86,10 +86,10 @@ simple_plot_timeseries_ribbon = function(R_max, DF_ALL, c=1, area=2500, vec_t=1:
     lines(x=vec_t, y=head(eval(parse(text=paste0("vec_q_", drive_type))), -1), lty=line_type, lwd=2)
   }
   grid()
-  if (show.legend){
-    legend("bottomright", legend=c(paste0(vec_drive_types_labels, ": simulated range"), paste0(vec_drive_types_labels, ": deterministic equation")),
-          col=c(vec_ribbon_colours, "black", "black"),
-          lty=c(1,1,1,2),
-          lwd=c(10,10,2,2))
-  }
+  # if (show.legend){
+  #   legend("bottomright", legend=c(paste0(vec_drive_types_labels, ": simulated range"), paste0(vec_drive_types_labels, ": deterministic equation")),
+  #         col=c(vec_ribbon_colours, "black", "black"),
+  #         lty=c(1,1,1,2),
+  #         lwd=c(10,10,2,2))
+  # }
 }

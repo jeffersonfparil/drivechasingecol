@@ -67,7 +67,8 @@ simple_plot_timeseries_ribbon = function(R_max, DF_ALL, c=1, area=2500, vec_t=1:
     legend("topright", legend=c(paste0(vec_drive_types_labels, ": simulated range"), paste0(vec_drive_types_labels, ": deterministic equation")),
           col=c(vec_ribbon_colours, "black", "black"),
           lty=c(1,1,1,2),
-          lwd=c(10,10,2,2))
+          lwd=c(10,10,2,2),
+          cex=0.75)
   }
   ### suppression gene drive allele frequency
   xlim = c(0, max(vec_t))

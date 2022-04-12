@@ -3366,7 +3366,7 @@ Figure_4 = function(IN_DIR){
   par(cex=1.25)
   for (R_max in c(2,3,5)){
     if (R_max==2){
-      simple_plot_timeseries_ribbon(R_max=R_max, DF_ALL=DF_ALL, show.legend=FALSE)
+      simple_plot_timeseries_ribbon(R_max=R_max, DF_ALL=DF_ALL, show.legend=TRUE)
     } else {
       simple_plot_timeseries_ribbon(R_max=R_max, DF_ALL=DF_ALL, show.legend=FALSE)
     }
@@ -3461,7 +3461,41 @@ Figure_6 = function(dat, OUT_DIR){
                    se = vec_se)
    df$tail_type = gsub("drive_wave_x_width_", "", df$tail_type)
    df$tail_type = gsub("_init", "_width", df$tail_type)
-   svg(paste0(OUT_DIR, "/Figure_6-pointplot-drve_WT_wave_loglog_scalings.svg"), width=9, height=5)
+   ### Plot
+   svg(paste0(OUT_DIR, "/Figure_6-pointplot-drve_WT_wave_loglog_scalings.svg"), width=9, height=8)
+   layout(matrix(c(1,2,3,3), byrow=TRUE, nrow=2))
+   ### Logit plot
+   simple_logit_plot(x=dat$sigma,
+                     y=dat$penetration,                      
+                     xlab="Dispersion parameter (σ)",
+                     ylab="P(drive wave penetration)",
+                     auc_loc_x=1,
+                     auc_loc_y=0.30)
+   ### Violinplot
+   violinplotter(drive_wave_x_width_init ~ sigma, data=dat,
+               TITLE="Drive wave width vs dispersion parameter\nand Log-log regression slopes",
+               XLAB="Dispersion parameter (σ)",
+               YLAB="Drive wave width\n(full width)",
+               MANN_WHITNEY=FALSE,
+               SHOW_MEANS=FALSE,
+               SHOW_SAMPLE_SIZE=FALSE,
+               PLOT_BARS=FALSE,
+               VIOLIN_COLOURS="gray")
+   ### add legend
+   mod = lm(log(drive_wave_x_width_init) ~ log(sigma), data=dat)
+   k_full = mod$coef[2]; se_full = coef(summary(mod))[, "Std. Error"][2]
+   mod = lm(log(drive_wave_x_width_trailing_init) ~ log(sigma), data=dat[dat$drive_wave_x_width_trailing_init>0,])
+   k_trailing = mod$coef[2]; se_trailing = coef(summary(mod))[, "Std. Error"][2]
+   new_dat = dat
+   new_dat$drive_wave_x_width_leading_init = dat$drive_wave_x_width_init - dat$drive_wave_x_width_trailing_init
+   mod = lm(log(drive_wave_x_width_leading_init) ~ log(sigma), data=new_dat[new_dat$drive_wave_x_width_leading_init>0,])
+   k_leading = mod$coef[2]; se_leading = coef(summary(mod))[, "Std. Error"][2]
+   legend("topleft", legend=c("Log-log regression slopes:",
+                           paste0("Full width = ", round(k_full,2), " (±", round(se_full,4), ")"),
+                           paste0("Leading half = ", round(k_leading,2), " (±", round(se_leading,4), ")"),
+                           paste0("Trailing half = ", round(k_trailing,2), " (±", round(se_trailing,4), ")")), bty="n")
+   
+   ### Point-plot with standard error bars
    par(mar=c(5,5,2,2))
    vec_col_drivetype = c("#66c2a5", "#fc8d62")
 
@@ -3480,6 +3514,7 @@ Figure_6 = function(dat, OUT_DIR){
    axis(1, line=2.25, lwd.ticks=1, lwd=0, at=c(1, 2), lab=c(""<""))
    axis(1, line=2.75, lwd.ticks=0, at=c(4, 5), lab=c(""<""))
    axis(1, line=2.25, lwd.ticks=1, lwd=0, at=c(4, 5), lab=c(""<""))
+
    dev.off()
 }
 
@@ -3515,45 +3550,11 @@ Figure_S1 = function(dat, OUT_DIR){
   dev.off()
 }
 
-#######################################################################################################################################################################################################################################################################################
-### FIGURE S3. Logistic regression plot of P(penetration) vs dispersion paratemeter, and violin plot of initial drive wave width for each level of the dispersion parameter, plus the log-log regression slopes using the full drive wave width, the leading half and the trailing half
-Figure_S3 = function(dat, OUT_DIR){
-  svg(paste0(OUT_DIR, "/Figure_S3-Logit_penetration_vs_dispersion.svg"), width=12, height=5)
-   par(mfrow=c(1,2))
-   simple_logit_plot(x=dat$sigma,
-                     y=dat$penetration,                      
-                     xlab="Dispersion parameter (σ)",
-                     ylab="P(drive wave penetration)")
-   violinplotter(drive_wave_x_width_init ~ sigma, data=dat,
-               TITLE="Drive wave width vs dispersion parameter\nand Log-log regression slopes",
-               XLAB="Dispersion parameter (σ)",
-               YLAB="Drive wave width\n(full width)",
-               MANN_WHITNEY=FALSE,
-               SHOW_MEANS=FALSE,
-               SHOW_SAMPLE_SIZE=FALSE,
-               PLOT_BARS=FALSE,
-               VIOLIN_COLOURS="gray")
-   ### add legend
-   mod = lm(log(drive_wave_x_width_init) ~ log(sigma), data=dat)
-   k_full = mod$coef[2]; se_full = coef(summary(mod))[, "Std. Error"][2]
-   mod = lm(log(drive_wave_x_width_trailing_init) ~ log(sigma), data=dat[dat$drive_wave_x_width_trailing_init>0,])
-   k_trailing = mod$coef[2]; se_trailing = coef(summary(mod))[, "Std. Error"][2]
-   new_dat = dat
-   new_dat$drive_wave_x_width_leading_init = dat$drive_wave_x_width_init - dat$drive_wave_x_width_trailing_init
-   mod = lm(log(drive_wave_x_width_leading_init) ~ log(sigma), data=new_dat[new_dat$drive_wave_x_width_leading_init>0,])
-   k_leading = mod$coef[2]; se_leading = coef(summary(mod))[, "Std. Error"][2]
-   legend("topleft", legend=c("Log-log regression slopes:",
-                           paste0("Full width = ", round(k_full,2), " (±", round(se_full,4), ")"),
-                           paste0("Leading half = ", round(k_leading,2), " (±", round(se_leading,4), ")"),
-                           paste0("Trailing half = ", round(k_trailing,2), " (±", round(se_trailing,4), ")")), bty="n")
-   dev.off()
-}
-
 ##########################################################################################
-### FIGURES S2 and S4. violinplots of outcomes x events across drive type, Rmax, and sigma
-Figures_S2_and_S4 = function(dat, OUT_DIR){
+### FIGURES S2 and S3. violinplots of outcomes x events across drive type, Rmax, and sigma
+Figures_S2_and_S3 = function(dat, OUT_DIR){
   vec_outcomes          = c("FAIL_PENETRATE", "FAIL_DRIVELOSS")
-  vec_outcome_labels    = c("P(drive failure | drive wave penetration)", "P(drive failure | drive loss)")
+  vec_outcome_labels    = c("P(drive failure and drive wave penetration)", "P(drive failure and drive loss)")
   vec_col_drivetype = c("#66c2a5", "#fc8d62")
   vec_col_sigma = "gray"
   vec_col_Rmax = "gray"
@@ -3561,7 +3562,6 @@ Figures_S2_and_S4 = function(dat, OUT_DIR){
     # i=1
     outcome = vec_outcomes[i]
     outcome_lab = vec_outcome_labels[i]
-    if (i == 2){i = i + 1}
     svg(paste0(OUT_DIR, "/Figure_S", 1+i,"-", outcome, "_vs_drive_type_sigma_Rmax.svg"), width=10, height=10)
     agg = eval(parse(text=paste0("aggregate(", outcome, " ~ drive_type + Rmax + sigma, data=dat, FUN=mean, na.rm=TRUE)")))
     colnames(agg) = c("Drive_type", "Rmax", "Sigma", "Frequency")
@@ -3575,11 +3575,11 @@ Figures_S2_and_S4 = function(dat, OUT_DIR){
 }
 
 ###########################################################
-### FIGURE S5. barplot of drive failure across N*={2,3,4,5}
-Figure_S5 = function(OUT_DIR){
+### FIGURE S4. barplot of drive failure across N*={2,3,4,5}
+Figure_S4 = function(OUT_DIR){
   ### hard-coded data from other simulations
   vec_x = list(Nstar_2=0.8990, Nstar_3=0.6875, Nstar_4=0.5787, Nstar_5=0.5066)
-  svg(paste0(OUT_DIR, "/Figure_S5-barplot_drive_failure_Nstar2_to_5.svg"), width=10, height=6)
+  svg(paste0(OUT_DIR, "/Figure_S4-barplot_drive_failure_Nstar2_to_5.svg"), width=10, height=6)
   barplot(unlist(vec_x),
           names.arg=seq(2,5),
           xlab="Equilibrium population density (N*)",
@@ -3621,12 +3621,10 @@ print("Plotting Figure_7")
 Figure_7(dat, OUT_DIR)
 print("Plotting Figure_S1")
 Figure_S1(dat, OUT_DIR)
-print("Plotting Figure_S3")
-Figure_S3(dat, OUT_DIR)
-print("Plotting Figures S2 and S4")
-Figures_S2_and_S4(dat, OUT_DIR)
-print("Plotting Figures S5")
-Figure_S5(OUT_DIR)
+print("Plotting Figures S2 and S3")
+Figures_S2_and_S3(dat, OUT_DIR)
+print("Plotting Figures S4")
+Figure_S4(OUT_DIR)
 ### reset
 setwd(SRC_DIR)
 

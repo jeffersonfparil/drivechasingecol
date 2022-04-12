@@ -31,7 +31,7 @@ simple_auc = function(y_binary, y_continuous, seed=123){
 }
 ### plot the logistic regression curve with the distribution of the binary response variable along the continuous explanatiry variable
 #' @export
-simple_logit_plot = function(x, y, level=0.95, col_fit="black", lwd_fit=1, col_ci_ribbon="#fc9272", lwd_ci_ribbon=1, col_hist_top="#af8dc3", col_hist_bottom="#7fbf7b", col_hist_bord=NA, main=NULL, xlab=NULL, ylab=NULL, xlim=NULL, ylim=NULL, zlim=NULL, x_ticks_len=6, y_ticks_len=6, z_ticks_len=6, x_digits=2, y_digits=2, z_digits=2, show_auc=TRUE, show_legend=FALSE){
+simple_logit_plot = function(x, y, level=0.95, col_fit="black", lwd_fit=1, col_ci_ribbon="#fc9272", lwd_ci_ribbon=1, col_hist_top="#af8dc3", col_hist_bottom="#7fbf7b", col_hist_bord=NA, main=NULL, xlab=NULL, ylab=NULL, xlim=NULL, ylim=NULL, zlim=NULL, x_ticks_len=6, y_ticks_len=6, z_ticks_len=6, x_digits=2, y_digits=2, z_digits=2, show_auc=TRUE, auc_loc="right", auc_loc_x="", auc_loc_y="", show_legend=FALSE){
   ### test ##########################
   # v_mu = apply(cbind(dat$v_x_Drive_mu, dat$v_y_Drive_mu), MAR=1, FUN=mean)
   # drive_loss = dat$drive_loss
@@ -127,7 +127,11 @@ simple_logit_plot = function(x, y, level=0.95, col_fit="black", lwd_fit=1, col_c
   auc = simple_auc(y_binary=y, y_continuous=fit$fit)
   ### legend
   if (show_auc){
-    legend("right", legend=paste0("AUC = ", round(auc*100,2), "%"), bty="n")
+    if ((auc_loc_x=="") & (auc_loc_y=="")){
+      legend(auc_loc, legend=paste0("AUC = ", round(auc*100,2), "%"), bty="n")
+    } else {
+      legend(auc_loc_x, auc_loc_y, legend=paste0("AUC = ", round(auc*100,2), "%"), bty="n")
+    }
   }
   if (show_legend){
     legend("left", legend=c("Logistic regression fit", paste0(round(level*100), "% confidence interval"),

@@ -3461,6 +3461,7 @@ Figure_6 = function(dat, OUT_DIR){
                    se = vec_se)
    df$tail_type = gsub("drive_wave_x_width_", "", df$tail_type)
    df$tail_type = gsub("_init", "_width", df$tail_type)
+   print(df)
    ### Plot
    svg(paste0(OUT_DIR, "/Figure_6-pointplot-drve_WT_wave_loglog_scalings.svg"), width=9, height=8)
    layout(matrix(c(1,2,3,3), byrow=TRUE, nrow=2))
@@ -3473,7 +3474,7 @@ Figure_6 = function(dat, OUT_DIR){
                      auc_loc_y=0.30)
    ### Violinplot
    violinplotter(drive_wave_x_width_init ~ sigma, data=dat,
-               TITLE="Drive wave width vs dispersion parameter\nand Log-log regression slopes",
+               TITLE="Drive wave width vs dispersion parameter",
                XLAB="Dispersion parameter (σ)",
                YLAB="Drive wave width\n(full width)",
                MANN_WHITNEY=FALSE,
@@ -3481,20 +3482,6 @@ Figure_6 = function(dat, OUT_DIR){
                SHOW_SAMPLE_SIZE=FALSE,
                PLOT_BARS=FALSE,
                VIOLIN_COLOURS="gray")
-   ### add legend
-   mod = lm(log(drive_wave_x_width_init) ~ log(sigma), data=dat)
-   k_full = mod$coef[2]; se_full = coef(summary(mod))[, "Std. Error"][2]
-   mod = lm(log(drive_wave_x_width_trailing_init) ~ log(sigma), data=dat[dat$drive_wave_x_width_trailing_init>0,])
-   k_trailing = mod$coef[2]; se_trailing = coef(summary(mod))[, "Std. Error"][2]
-   new_dat = dat
-   new_dat$drive_wave_x_width_leading_init = dat$drive_wave_x_width_init - dat$drive_wave_x_width_trailing_init
-   mod = lm(log(drive_wave_x_width_leading_init) ~ log(sigma), data=new_dat[new_dat$drive_wave_x_width_leading_init>0,])
-   k_leading = mod$coef[2]; se_leading = coef(summary(mod))[, "Std. Error"][2]
-   legend("topleft", legend=c("Log-log regression slopes:",
-                           paste0("Full width = ", round(k_full,2), " (±", round(se_full,4), ")"),
-                           paste0("Leading half = ", round(k_leading,2), " (±", round(se_leading,4), ")"),
-                           paste0("Trailing half = ", round(k_trailing,2), " (±", round(se_trailing,4), ")")), bty="n")
-   
    ### Point-plot with standard error bars
    par(mar=c(5,5,2,2))
    vec_col_drivetype = c("#66c2a5", "#fc8d62")
@@ -3503,7 +3490,7 @@ Figure_6 = function(dat, OUT_DIR){
    ylim = c(1-(ymax-1.25), ymax)
    plt = plot(df$coef, xlim=c(0.5, nrow(df)+0.5), ylim=ylim, type="p", pch=19,
               xaxt='n',
-              ylab="Log-log regression\nscaling exponent",
+              ylab="Log-log regression slope or\nscaling exponent",
               xlab="")
    grid()
    lines(c(-1,nrow(df)+1), c(1,1), lty=2, col="red")

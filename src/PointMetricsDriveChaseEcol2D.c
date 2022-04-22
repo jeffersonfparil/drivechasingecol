@@ -33,21 +33,15 @@ SEXP mate (SEXP R_fX, SEXP R_fY, SEXP R_mX, SEXP R_mY, SEXP R_nF, SEXP R_nM, SEX
 
 //------------------------//
 //  Function definitions  //
-<<<<<<< HEAD
 //------------------------//
 
 // Probability density at x (location on a 1D line)
-=======
-
-// Probability density at x (location)
->>>>>>> 18b55d3cf30a4323a4c52dee3b6197418d773a34
 //		- given that x is normally distributed with mean 0 and sd=bw
 double norm1D (double x, double bw){
 	return exp(-pow(x,2)/(2*pow(bw,2)))/(bw*sqrt(2*Pi));
 }
 
 // Probability density at x and y (location on a 2D plane)
-<<<<<<< HEAD
 // Bivariate normal pdf = (e^(-z/(2*(1-covxy)))) / (2*pi*sdx*sdy*sqrt(1-covxy))
 //		where: z = (((x-ux)^2)/sdx^2) - ((2*covxy*(x-ux)*(y-uy))/(sdx*sdy)) + (((y-uy)^2)/sdy^2)
 //		   --> z = ((x-ux)^2 + (y-uy)^2) / sd^2
@@ -56,13 +50,10 @@ double norm1D (double x, double bw){
 //		then:  z = (c^2) / (sd^2)
 //		hence: pdf = (e^((-c^2)/(2*sd^2))) / (2*pi*sd^2);
 //			since: covxy=0; mux=muy=0; sdx=sdy; z^2=x^2+y^2
-=======
->>>>>>> 18b55d3cf30a4323a4c52dee3b6197418d773a34
 double norm2D (double z, double bw){
 	return exp(-pow(z,2)/(2*pow(bw,2)))/(2*Pi*pow(bw,2));
 }
 
-<<<<<<< HEAD
 // Toroidal distance
 //		- The landscape is an edgeless torus which wraps around on itself.
 //		- This means that the maximum distance between 2 points along the x or y axes is half the width or height of the landscape, repectively.
@@ -75,19 +66,6 @@ double ToroidalDistance (double x1, double y1, double x2, double y2, double x_mi
     dx = (x_max+x_min) - dx;
   if (dy > ((y_max+y_min)/2.0))
     dy = (y_max+y_min) - dy;
-=======
-double ToroidalDistance (double x1, double y1, double x2, double y2)
-{
-  double dx = fabs(x2 - x1);
-  double dy = fabs(y2 - y1);
-  
-  if (dx > 25.0)
-    dx = 50.0 - dx;
-  
-  if (dy > 25.0)
-    dy = 50.0 - dy;
-  
->>>>>>> 18b55d3cf30a4323a4c52dee3b6197418d773a34
   return sqrt(dx*dx + dy*dy);
 }
 
@@ -245,8 +223,3 @@ SEXP mate (SEXP R_fX, SEXP R_fY, SEXP R_mX, SEXP R_mY, SEXP R_nF, SEXP R_nM, SEX
 	UNPROTECT(1);
 	return(mate);
 }
-<<<<<<< HEAD
-=======
-
-
->>>>>>> 18b55d3cf30a4323a4c52dee3b6197418d773a34

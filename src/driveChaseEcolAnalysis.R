@@ -1,5 +1,10 @@
 ### Analysis of stochastioc simulation output
-args = commandArgs(trailingOnly=TRUE)
+# args = commandArgs(trailingOnly=TRUE)
+# args = c("FALSE", "FALSE", "~/Documents/drivechasingecol")
+args = c("TRUE", 
+         "FALSE",
+         "~/Documents/drivechasingecol",
+         "~/Downloads/data/driveChaseEcol/driveChaseEcol-OUTPUT")
 # ```{bash}
 # time \
 # for i in $(seq 2 5)
@@ -10,12 +15,8 @@ args = commandArgs(trailingOnly=TRUE)
 #           ~/Documents/drivechasingecol \
 #           ~/Downloads/data/driveChaseEcol/driveChaseEcol-OUTPUT-Nstar${i}
 # done
-args = c("FALSE", "FALSE", "~/Documents/drivechasingecol")
-# args = c("TRUE", 
-#          "FALSE",
-#          "~/Documents/drivechasingecol",
-#          "~/Downloads/data/driveChaseEcol/driveChaseEcol-OUTPUT")
 # ```
+
 ##################
 ### Parameters ###
 ##################
@@ -277,11 +278,11 @@ fun_prepare_dataset_and_exploratoty_analysis = function(dat, plot.out=TRUE){
       outcome_lab = vec_outcome_labels[i]
       svg(paste0(OUT_DIR, "/Violinplots_", outcome, "_vs_drive_type_sigma_Rmax.svg"), width=10, height=10)
       agg = eval(parse(text=paste0("aggregate(", outcome, " ~ drive_type + Rmax + sigma, data=dat, FUN=mean, na.rm=TRUE)")))
-      colnames(agg) = c("Drive_type", "Rmax", "Sigma", "Frequency")
+      colnames(agg) = c("Drive_type", "Rmax", "σ", "Frequency")
       agg$Rmax = round(agg$Rmax, 2)
       layout(matrix(c(1,2,3,3), ncol=2, byrow=T))
       violinplotter(Frequency ~ Drive_type, data=agg, TITLE=outcome_lab)
-      violinplotter(Frequency ~ Sigma, data=agg, TITLE=outcome_lab)
+      violinplotter(Frequency ~ σ, data=agg, TITLE=outcome_lab)
       violinplotter(Frequency ~ Rmax, data=agg, TITLE=outcome_lab)
       dev.off()
     }
@@ -3284,6 +3285,58 @@ Figure_2 = function(dat, include.TADS, OUT_DIR){
 
 #########################################################
 ### FIGURE 3: Stacked barplot of outcomes of the simulations
+stacked_barplots_outcomes = function(dat, main=""){
+   vec_id_success = c(1:nrow(dat))[dat$crash]
+   vec_id_failure = c(1:nrow(dat))[!dat$crash]
+   vec_id_driveLoss = c(1:nrow(dat))[dat$drive_loss]
+   vec_id_chasing = c(1:nrow(dat))[dat$chasing]
+   vec_id_chasing_and_driveLoss = c(1:nrow(dat))[(dat$chasing) & (dat$drive_loss)]
+
+   success_chasing_and_driveLoss = sum(vec_id_chasing_and_driveLoss %in% vec_id_success)
+   success_chasing = sum(vec_id_chasing %in% vec_id_success) - success_chasing_and_driveLoss
+   success_driveLoss = sum(vec_id_driveLoss %in% vec_id_success) - success_chasing_and_driveLoss
+   success_the_rest = length(vec_id_success) - (success_chasing + success_driveLoss + success_chasing_and_driveLoss)
+
+   failure_chasing_and_driveLoss = sum(vec_id_chasing_and_driveLoss %in% vec_id_failure)
+   failure_chasing = sum(vec_id_chasing %in% vec_id_failure) - failure_chasing_and_driveLoss
+   failure_driveLoss = sum(vec_id_driveLoss %in% vec_id_failure) - failure_chasing_and_driveLoss
+   failure_the_rest = length(vec_id_failure) - (failure_chasing + failure_driveLoss + failure_chasing_and_driveLoss)
+
+   X = data.frame(Success=c(success_chasing, success_driveLoss, success_chasing_and_driveLoss, success_the_rest),
+                  Failure=c(failure_chasing, failure_driveLoss, failure_chasing_and_driveLoss, failure_the_rest))
+   rownames(X) = c("Chasing", "Drive loss", "Chasing and drive loss", "Others")
+   colours = c("#fb8072", "#80b1d3", "#b2df8a", "#cccccc")
+   X = as.matrix(X)
+   n = sum(X)
+   X = X / n
+   bp = barplot(X, col=colours, bord=NA, xaxt="n", ylab="Frequency", main=main)
+
+   success_pct = round(sum(X[,1]*100), 2)
+   failure_pct = round(sum(X[,2]*100), 2)
+   axis(side=1, at=bp, col=NA, cex.axis=1.5, lab=c(paste0("Success (", success_pct, "%)"), paste0("Failure (", failure_pct, "%)")))
+
+   success_chasing_pct = round(X[rownames(X)=="Chasing", colnames(X)=="Success"]*100,2)
+   success_chasing_cnt = X[rownames(X)=="Chasing", colnames(X)=="Success"] * n
+   success_chasing_pos = X[rownames(X)=="Chasing", colnames(X)=="Success"] / 2
+   text(x=bp[1], y=success_chasing_pos, lab=paste0("Chasing\n", success_chasing_pct, "% (", success_chasing_cnt, ")"))
+
+   failure_chasing_pct = round(X[rownames(X)=="Chasing", colnames(X)=="Failure"]*100,2)
+   failure_chasing_cnt = X[rownames(X)=="Chasing", colnames(X)=="Failure"] * n
+   failure_chasing_pos = X[rownames(X)=="Chasing", colnames(X)=="Failure"] / 2
+   text(x=bp[2], y=failure_chasing_pos, lab=paste0("Chasing\n", failure_chasing_pct, "% (", failure_chasing_cnt, ")"))
+
+   failure_driveLoss_pct = round(X[rownames(X)=="Drive loss", colnames(X)=="Failure"]*100,2)
+   failure_driveLoss_cnt = X[rownames(X)=="Drive loss", colnames(X)=="Failure"] * n
+   failure_driveLoss_pos = (X[rownames(X)=="Drive loss", colnames(X)=="Failure"] / 2) + (failure_chasing_pos*2)
+   text(x=bp[2], y=failure_driveLoss_pos, lab=paste0("Drive loss\n", failure_driveLoss_pct, "% (", failure_driveLoss_cnt, ")"))
+
+   failure_chasing_and_driveLoss_pct = round(X[rownames(X)=="Chasing and drive loss", colnames(X)=="Failure"]*100,2)
+   failure_chasing_and_driveLoss_cnt = X[rownames(X)=="Chasing and drive loss", colnames(X)=="Failure"] * n
+   failure_chasing_and_driveLoss_pos = (X[rownames(X)=="Chasing and drive loss", colnames(X)=="Failure"] / 2) + (failure_driveLoss_pos - failure_chasing_pos)*2
+   text(x=bp[2], y=failure_chasing_and_driveLoss_pos, lab=paste0("Chasing and drive loss\n", failure_chasing_and_driveLoss_pct, "% (", failure_chasing_and_driveLoss_cnt, ")"))
+   return(bp)
+}
+
 Figure_3 = function(dat, OUT_DIR){
   # vec_id_success = c(1:nrow(dat))[dat$crash]
   # vec_id_failure = c(1:nrow(dat))[!dat$crash]
@@ -3311,55 +3364,8 @@ Figure_3 = function(dat, OUT_DIR){
   #             filename=paste0(OUT_DIR, "/Figure_3-venn-diagram-outcomes.svg"))
   ### Stacked barplot
   svg(paste0(OUT_DIR, "/Figure_3-stacked-barplot-outcomes.svg"), width=10, height=6)
-  vec_id_success = c(1:nrow(dat))[dat$crash]
-  vec_id_failure = c(1:nrow(dat))[!dat$crash]
-  vec_id_driveLoss = c(1:nrow(dat))[dat$drive_loss]
-  vec_id_chasing = c(1:nrow(dat))[dat$chasing]
-  vec_id_chasing_and_driveLoss = c(1:nrow(dat))[(dat$chasing) & (dat$drive_loss)]
-
-   success_chasing_and_driveLoss = sum(vec_id_chasing_and_driveLoss %in% vec_id_success)
-   success_chasing = sum(vec_id_chasing %in% vec_id_success) - success_chasing_and_driveLoss
-   success_driveLoss = sum(vec_id_driveLoss %in% vec_id_success) - success_chasing_and_driveLoss
-   success_the_rest = length(vec_id_success) - (success_chasing + success_driveLoss + success_chasing_and_driveLoss)
-
-   failure_chasing_and_driveLoss = sum(vec_id_chasing_and_driveLoss %in% vec_id_failure)
-   failure_chasing = sum(vec_id_chasing %in% vec_id_failure) - failure_chasing_and_driveLoss
-   failure_driveLoss = sum(vec_id_driveLoss %in% vec_id_failure) - failure_chasing_and_driveLoss
-   failure_the_rest = length(vec_id_failure) - (failure_chasing + failure_driveLoss + failure_chasing_and_driveLoss)
-
-   X = data.frame(Success=c(success_chasing, success_driveLoss, success_chasing_and_driveLoss, success_the_rest),
-                  Failure=c(failure_chasing, failure_driveLoss, failure_chasing_and_driveLoss, failure_the_rest))
-   rownames(X) = c("Chasing", "Drive loss", "Chasing and drive loss", "Others")
-   colours = c("#fb8072", "#80b1d3", "#b2df8a", "#cccccc")
-   X = as.matrix(X)
-   n = sum(X)
-   X = X / n
-   bp = barplot(X, col=colours, bord=NA, xaxt="n", ylab="Frequency")
-
-   success_pct = round(sum(X[,1]*100), 2)
-   failure_pct = round(sum(X[,2]*100), 2)
-   axis(side=1, at=bp, col=NA, cex.axis=1.5, lab=c(paste0("Success (", success_pct, "%)"), paste0("Failure (", failure_pct, "%)")))
-
-   success_chasing_pct = round(X[rownames(X)=="Chasing", colnames(X)=="Success"]*100,2)
-   success_chasing_cnt = X[rownames(X)=="Chasing", colnames(X)=="Success"] * n
-   success_chasing_pos = X[rownames(X)=="Chasing", colnames(X)=="Success"] / 2
-   text(x=bp[1], y=success_chasing_pos, lab=paste0("Chasing\n", success_chasing_pct, "% (", success_chasing_cnt, ")"))
-
-   failure_chasing_pct = round(X[rownames(X)=="Chasing", colnames(X)=="Failure"]*100,2)
-   failure_chasing_cnt = X[rownames(X)=="Chasing", colnames(X)=="Failure"] * n
-   failure_chasing_pos = X[rownames(X)=="Chasing", colnames(X)=="Failure"] / 2
-   text(x=bp[2], y=failure_chasing_pos, lab=paste0("Chasing\n", failure_chasing_pct, "% (", failure_chasing_cnt, ")"))
-
-   failure_driveLoss_pct = round(X[rownames(X)=="Drive loss", colnames(X)=="Failure"]*100,2)
-   failure_driveLoss_cnt = X[rownames(X)=="Drive loss", colnames(X)=="Failure"] * n
-   failure_driveLoss_pos = (X[rownames(X)=="Drive loss", colnames(X)=="Failure"] / 2) + (failure_chasing_pos*2)
-   text(x=bp[2], y=failure_driveLoss_pos, lab=paste0("Drive loss\n", failure_driveLoss_pct, "% (", failure_driveLoss_cnt, ")"))
-
-   failure_chasing_and_driveLoss_pct = round(X[rownames(X)=="Chasing and drive loss", colnames(X)=="Failure"]*100,2)
-   failure_chasing_and_driveLoss_cnt = X[rownames(X)=="Chasing and drive loss", colnames(X)=="Failure"] * n
-   failure_chasing_and_driveLoss_pos = (X[rownames(X)=="Chasing and drive loss", colnames(X)=="Failure"] / 2) + (failure_driveLoss_pos - failure_chasing_pos)*2
-   text(x=bp[2], y=failure_chasing_and_driveLoss_pos, lab=paste0("Chasing and drive loss\n", failure_chasing_and_driveLoss_pct, "% (", failure_chasing_and_driveLoss_cnt, ")"))
-   dev.off()
+  bp = stacked_barplots_outcomes(dat)
+  dev.off()
    ### Checking the identities of the 47 simulations which resulted in failure but without chasing nor drive loss
    # idx = !dat$crash & !dat$drive_loss & !dat$chasing
    # failure_with_chasing_and_driveLoss = dat[idx, ]
@@ -3372,7 +3378,7 @@ Figure_3 = function(dat, OUT_DIR){
 }
 
 ################################################################# (NOTE: below excludes TADS)
-### FIGURE 4. recursive suppression gene drive allele frequency and population size functions
+### FIGURE 4: recursive suppression gene drive allele frequency and population size functions
 Figure_4 = function(IN_DIR){
   PREVIOUS_DIR = getwd()
   setwd(IN_DIR)
@@ -3394,7 +3400,7 @@ Figure_4 = function(IN_DIR){
 }
 
 ################################################################################################
-### FIGURE 5. logistic regression plots of the P(penetration) vs drive wave characteristics, and 
+### FIGURE 5: logistic regression plots of the P(penetration) vs drive wave characteristics, and 
 ###           violinplots comparing the wave characteristics of W-shredder and X-shredder
 Figure_5 = function(dat, OUT_DIR, fname="Figure_5-logistic_violin_plots_penetration_vs_wave_chars.svg", width=10, height=7, y="penetration", ylab="P(drive wave penetration)", violinplots=TRUE, decompose_widths=FALSE){
    if (decompose_widths==TRUE) {
@@ -3450,7 +3456,7 @@ Figure_5 = function(dat, OUT_DIR, fname="Figure_5-logistic_violin_plots_penetrat
 }
 
 #############################################################################################
-### FIGURE 6. Pointplots of log-log regression exponential scalings of drive and WT wave widths
+### FIGURE 6: Pointplots of log-log regression exponential scalings of drive and WT wave widths
 Figure_6 = function(dat, OUT_DIR){
    vec_drive_type = c()
    vec_tail_type = c()
@@ -3524,7 +3530,7 @@ Figure_6 = function(dat, OUT_DIR){
 }
 
 ###############################################################################################
-### FIGURE 7. logistic regression plots of the P(escape) = P(drive loss | penetration) vs drive wave characteristics, and 
+### FIGURE 7: logistic regression plots of the P(escape) = P(drive loss | penetration) vs drive wave characteristics, and 
 ###           violinplots comparing the wave characteristics of W-shredder and X-shredder
 Figure_7 = function(dat, OUT_DIR){
    Figure_5(dat=dat[dat$penetration, ],
@@ -3539,25 +3545,36 @@ Figure_7 = function(dat, OUT_DIR){
 }
 
 ################################################################################
-### FIGURE S1. Violinplots of simulation outcomes vs drive_type, Rmax, and sigma
+### FIGURE S1: Violinplots of simulation outcomes vs drive_type, Rmax, and sigma
 Figure_S1 = function(dat, OUT_DIR){
   svg(paste0(OUT_DIR, "/Figure_S1-violinplots_failure_vs_drive_type_sigma_Rmax.svg"), width=10, height=10)
   agg = aggregate(FAILURE ~ drive_type + Rmax + sigma, data=dat, FUN=mean, na.rm=TRUE)
-  colnames(agg) = c("Drive_type", "Rmax", "Sigma", "Frequency")
+  colnames(agg) = c("Drive_type", "Rmax", "σ", "Frequency")
   agg$Rmax = round(agg$Rmax, 2)
   vec_col_drivetype = c("#66c2a5", "#fc8d62")
   vec_col_sigma = "gray"
   vec_col_Rmax = "gray"
   layout(matrix(c(1,2,3,3), ncol=2, byrow=T))
   violinplotter(Frequency ~ Drive_type, data=agg, HSD=FALSE, MANN_WHITNEY=FALSE, SHOW_MEANS=TRUE, TITLE="P(failure) as a function of drive type", VIOLIN_COLOURS=vec_col_drivetype)
-  violinplotter(Frequency ~ Sigma, data=agg, HSD=FALSE, MANN_WHITNEY=FALSE, SHOW_MEANS=TRUE, TITLE="P(failure) as a function of dispersion", VIOLIN_COLOURS=vec_col_sigma)
+  violinplotter(Frequency ~ σ, data=agg, HSD=FALSE, MANN_WHITNEY=FALSE, SHOW_MEANS=TRUE, TITLE="P(failure) as a function of dispersion", VIOLIN_COLOURS=vec_col_sigma)
   violinplotter(Frequency ~ Rmax, data=agg, HSD=FALSE, MANN_WHITNEY=FALSE, SHOW_MEANS=TRUE, TITLE="P(failure) as a function of maximum female fecundity", VIOLIN_COLOURS=vec_col_Rmax)
   dev.off()
 }
 
+
+########################################################################################################
+### FIGURES S2: Stacked barplot of outcomes of the simulations fow W-shredder and X-shredder, separately
+Figure_S2 = function(dat, OUT_DIR){
+  svg(paste0(OUT_DIR, "/Figure_S2-stacked-barplot-outcomes-per-drive-type.svg"), width=10, height=12)
+  par(mfrow=c(2,1))
+  bp_W = stacked_barplots_outcomes(dat[dat$drive_type=="W_shredder", ], main="W-shredder")
+  bp_X = stacked_barplots_outcomes(dat[dat$drive_type=="X_shredder", ], main="X-shredder")
+  dev.off()
+}
+
 ##########################################################################################
-### FIGURES S2 and S3. violinplots of outcomes x events across drive type, Rmax, and sigma
-Figures_S2_and_S3 = function(dat, OUT_DIR){
+### FIGURES S3 and S4: violinplots of outcomes x events across drive type, Rmax, and sigma
+Figures_S3_and_S4 = function(dat, OUT_DIR){
   vec_outcomes          = c("FAIL_PENETRATE", "FAIL_DRIVELOSS")
   vec_outcome_labels    = c("P(drive failure and drive wave penetration)", "P(drive failure and drive loss)")
   vec_col_drivetype = c("#66c2a5", "#fc8d62")
@@ -3567,24 +3584,24 @@ Figures_S2_and_S3 = function(dat, OUT_DIR){
     # i=1
     outcome = vec_outcomes[i]
     outcome_lab = vec_outcome_labels[i]
-    svg(paste0(OUT_DIR, "/Figure_S", 1+i,"-", outcome, "_vs_drive_type_sigma_Rmax.svg"), width=10, height=10)
+    svg(paste0(OUT_DIR, "/Figure_S", 2+i,"-", outcome, "_vs_drive_type_sigma_Rmax.svg"), width=10, height=10)
     agg = eval(parse(text=paste0("aggregate(", outcome, " ~ drive_type + Rmax + sigma, data=dat, FUN=mean, na.rm=TRUE)")))
-    colnames(agg) = c("Drive_type", "Rmax", "Sigma", "Frequency")
+    colnames(agg) = c("Drive_type", "Rmax", "σ", "Frequency")
     agg$Rmax = round(agg$Rmax, 2)
     layout(matrix(c(1,2,3,3), ncol=2, byrow=T))
     violinplotter(Frequency ~ Drive_type, data=agg, TITLE=outcome_lab, HSD=FALSE, MANN_WHITNEY=FALSE, SHOW_MEANS=TRUE, VIOLIN_COLOURS=vec_col_drivetype)
-    violinplotter(Frequency ~ Sigma, data=agg, TITLE=outcome_lab, HSD=FALSE, MANN_WHITNEY=FALSE, SHOW_MEANS=TRUE, VIOLIN_COLOURS=vec_col_sigma)
+    violinplotter(Frequency ~ σ, data=agg, TITLE=outcome_lab, HSD=FALSE, MANN_WHITNEY=FALSE, SHOW_MEANS=TRUE, VIOLIN_COLOURS=vec_col_sigma)
     violinplotter(Frequency ~ Rmax, data=agg, TITLE=outcome_lab, HSD=FALSE, MANN_WHITNEY=FALSE, SHOW_MEANS=TRUE, VIOLIN_COLOURS=vec_col_Rmax)
     dev.off()
   }
 }
 
 ###########################################################
-### FIGURE S4. barplot of drive failure across N*={2,3,4,5}
-Figure_S4 = function(OUT_DIR){
+### FIGURE S5. barplot of drive failure across N*={2,3,4,5}
+Figure_S5 = function(OUT_DIR){
   ### hard-coded data from other simulations
   vec_x = list(Nstar_2=0.8990, Nstar_3=0.6875, Nstar_4=0.5787, Nstar_5=0.5066)
-  svg(paste0(OUT_DIR, "/Figure_S4-barplot_drive_failure_Nstar2_to_5.svg"), width=10, height=6)
+  svg(paste0(OUT_DIR, "/Figure_S5-barplot_drive_failure_Nstar2_to_5.svg"), width=10, height=6)
   barplot(unlist(vec_x),
           names.arg=seq(2,5),
           xlab="Equilibrium population density (N*)",
@@ -3626,10 +3643,12 @@ print("Plotting Figure_7")
 Figure_7(dat, OUT_DIR)
 print("Plotting Figure_S1")
 Figure_S1(dat, OUT_DIR)
-print("Plotting Figures S2 and S3")
-Figures_S2_and_S3(dat, OUT_DIR)
-print("Plotting Figures S4")
-Figure_S4(OUT_DIR)
+print("Plotting Figure_S2")
+Figure_S2(dat, OUT_DIR)
+print("Plotting Figures S3 and S4")
+Figures_S3_and_S4(dat, OUT_DIR)
+print("Plotting Figures S5")
+Figure_S5(OUT_DIR)
 ### reset
 setwd(SRC_DIR)
 

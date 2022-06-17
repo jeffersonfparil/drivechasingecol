@@ -30,6 +30,19 @@ simple_plot_timeseries_ribbon = function(R_max, DF_ALL, c=1, area=2500, vec_t=1:
   df_n_max = aggregate(n ~ gen + drive_type, data=subdat, FUN=max, na.rm=TRUE)
   df_q_min = aggregate(q ~ gen + drive_type, data=subdat, FUN=min, na.rm=TRUE)
   df_q_max = aggregate(q ~ gen + drive_type, data=subdat, FUN=max, na.rm=TRUE)
+  #### scaling X-shredder q to range from 0 to 1 instead of the default 0 to 0.5 because the drive only occurs in the Y-chromosome in males
+  idx = df_q_min$drive_type == "X_shredder"
+  df_q_min$q[idx] = df_q_min$q[idx] * 2
+  idx = df_q_max$drive_type == "X_shredder"
+  df_q_max$q[idx] = df_q_max$q[idx] * 2
+  #### removing the decrease in q as the population crashes for a more straightforward picture i.e. excluding the unstability in q as the populaion size decreases
+  for (d in unique(df_q_min$drive_type)){
+    # d = unique(df_q_min$drive_type)[1]
+    idx1 = df_q_max$drive_type == d
+    idx2 = df_q_max$gen[idx1] > df_q_max$gen[idx1][which(df_q_max$q[idx1]==max(df_q_max$q[idx1]))][1]
+    df_q_max$q[idx1][idx2] = tail(df_q_max$q[idx1][!idx2], 1)
+    df_q_min$q[idx1][idx2] = tail(df_q_max$q[idx1][!idx2], 1)
+  }
   #####################
   ### deterministic ###
   vec_q_W_shredder = vec_q_X_shredder = c(q_intro)
@@ -39,8 +52,8 @@ simple_plot_timeseries_ribbon = function(R_max, DF_ALL, c=1, area=2500, vec_t=1:
   for (i in vec_t){
     vec_q_W_shredder = c(vec_q_W_shredder, q_W_shredder(q=tail(vec_q_W_shredder,1), c=c))
     vec_q_X_shredder = c(vec_q_X_shredder, q_X_shredder(q=tail(vec_q_X_shredder,1), c=c))
-    vec_N_W_shredder = c(vec_N_W_shredder, N(N=tail(vec_N_W_shredder,1), R_max=R_max, N_star=N_star, c=c, q=tail(vec_q_W_shredder,1), area=area))
-    vec_N_X_shredder = c(vec_N_X_shredder, N(N=tail(vec_N_X_shredder,1), R_max=R_max, N_star=N_star, c=c, q=tail(vec_q_X_shredder,1), area=area))
+    vec_N_W_shredder = c(vec_N_W_shredder, N(N=tail(vec_N_W_shredder,1), R_max=R_max, N_star=N_star, c=c, q=head(tail(vec_q_W_shredder,2), 1), area=area))
+    vec_N_X_shredder = c(vec_N_X_shredder, N(N=tail(vec_N_X_shredder,1), R_max=R_max, N_star=N_star, c=c, q=head(tail(vec_q_X_shredder,2), 1), area=area))
   }
   ############
   ### Plot ###

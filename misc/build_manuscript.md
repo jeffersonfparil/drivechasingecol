@@ -1,13 +1,15 @@
 # Track changes between revisions
 ```{sh}
+cd ~/Documents/drivechasingecol/ms/
 latexdiff \
-    ~/Documents/drivechasingecol/ms/main_20220510.tex \
-    ~/Documents/drivechasingecol/ms/main.tex \
-    > ~/Documents/drivechasingecol/ms/tracked_changes_with_latexdiff.tex
+    main_20220510.tex \
+    main.tex \
+    > tracked_changes_with_latexdiff.tex
 ```
 
 # Build manuscript
 ```{sh}
+cd ~/Documents/drivechasingecol/ms/
 pdflatex -interaction=nonstopmode main.tex  --bibliography references.bib -o main.pdf
 bibtex main
 pdflatex -interaction=nonstopmode main.tex  --bibliography references.bib -o main.pdf
@@ -24,4 +26,10 @@ pdflatex -interaction=nonstopmode Responses_to_reviewers_round2.tex  --bibliogra
 pdflatex -interaction=nonstopmode Responses_to_reviewers_round2.tex  --bibliography references.bib -o Responses_to_reviewers_round2.pdf
 
 rm *.aux *.bbl *.blg *.fdb_latexmk *.fls *.log *.out *.xml *-blx.bib
+```
+
+# Count the number of words
+```{sh}
+cd ~/Documents/drivechasingecol/ms/
+detex main.tex | wc -w
 ```
